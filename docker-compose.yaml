@@ -1,0 +1,73 @@
+version: "3.9"
+
+networks:
+  industrial_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: industrial_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scada_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scada_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-industrial_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script de inicialização executado na primeira subida
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - industrial_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scada_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: industrial_gateway
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Banco de dados
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-industrial_db}
+      DB_USER: ${POSTGRES_USER:-scada_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-scada_pass}
+
+      PLC_HOST: ${PLC_HOST:-192.168.1.10}
+      PLC_PORT: ${PLC_PORT:-502}
+      POLL_INTERVAL: ${POLL_INTERVAL:-5}
+    networks:
+      - industrial_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: industrial_grafana
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - industrial_net
