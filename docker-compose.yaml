@@ -9,6 +9,9 @@ volumes:
   grafana_data:
 
 services:
+  # ────────────────────────────────────────────────────────────────
+  # SERVIÇO 1: PostgreSQL
+  # ────────────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: industrial_db
@@ -19,7 +22,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-industrial_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Script de inicialização executado na primeira subida
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - industrial_net
@@ -29,6 +31,9 @@ services:
       timeout: 5s
       retries: 5
 
+  # ────────────────────────────────────────────────────────────────
+  # SERVIÇO 2: Gateway Python (FastAPI + pymodbus)
+  # ────────────────────────────────────────────────────────────────
   gateway:
     build:
       context: ./gateway
@@ -38,22 +43,30 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    ports:
+      - "8000:8000"
     environment:
-      # Banco de dados
+      # Banco
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB:-industrial_db}
       DB_USER: ${POSTGRES_USER:-scada_user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-scada_pass}
-
-      PLC_HOST: ${PLC_HOST:-192.168.1.10}
+      # CLP
+      PLC_HOST: ${PLC_HOST:-192.168.15.1}
       PLC_PORT: ${PLC_PORT:-502}
-      POLL_INTERVAL: ${POLL_INTERVAL:-5}
+      PLC_UNIT_ID: ${PLC_UNIT_ID:-1}
+      # CORS — origem do Grafana no browser do operador
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     networks:
       - industrial_net
+    # Permite alcançar o IP físico do CLP (192.168.15.1)
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # ────────────────────────────────────────────────────────────────
+  # SERVIÇO 3: Grafana
+  # ────────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
     container_name: industrial_grafana
@@ -65,7 +78,8 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
-      GF_INSTALL_PLUGINS: grafana-clock-panel
+      GF_INSTALL_PLUGINS: cloudspout-button-panel
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
