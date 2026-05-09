@@ -1,11 +1,15 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
 
 class Config:
     DB_HOST     = os.getenv("DB_HOST", "localhost")
     DB_PORT     = int(os.getenv("DB_PORT", 5432))
     DB_NAME     = os.getenv("DB_NAME", "industrial_db")
-    DB_USER     = os.getenv("DB_USER", "scada_user")
+    DB_USER     = os.getenv("DB_USER", "postgres")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
     PLC_HOST    = os.getenv("PLC_HOST", "192.168.15.1")

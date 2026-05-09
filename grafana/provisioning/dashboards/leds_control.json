@@ -1,0 +1,83 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "tags": ["industrial"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Gateway Industrial — Controle de LEDs",
+  "uid": "industrial-leds",
+  "version": 1,
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Estado dos LEDs",
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-industrial" },
+      "options": { "cellHeight": "sm", "showHeader": true, "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "custom": { "align": "center" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Estado" },
+            "properties": [
+              { "id": "custom.width", "value": 100 },
+              { "id": "mappings", "value": [{ "type": "value", "options": {
+                "ON":  { "color": "green", "index": 0, "text": "ON"  },
+                "OFF": { "color": "red",   "index": 1, "text": "OFF" }
+              }}]}
+            ]
+          }
+        ]
+      },
+      "targets": [{ "datasource": { "type": "postgres", "uid": "postgres-industrial" }, "format": "table", "rawQuery": true, "rawSql": "SELECT id AS \"LED\", CASE WHEN toggled THEN 'ON' ELSE 'OFF' END AS \"Estado\", updated_at AS \"Atualizado em\" FROM leds ORDER BY id", "refId": "A" }]
+    },
+
+    { "id": 2,  "type": "cloudspout-button-panel", "title": "LED 0", "gridPos": { "h": 4, "w": 3, "x": 0,  "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/0/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 3,  "type": "cloudspout-button-panel", "title": "LED 1", "gridPos": { "h": 4, "w": 3, "x": 3,  "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/1/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 4,  "type": "cloudspout-button-panel", "title": "LED 2", "gridPos": { "h": 4, "w": 3, "x": 6,  "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/2/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 5,  "type": "cloudspout-button-panel", "title": "LED 3", "gridPos": { "h": 4, "w": 3, "x": 9,  "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/3/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 6,  "type": "cloudspout-button-panel", "title": "LED 4", "gridPos": { "h": 4, "w": 3, "x": 12, "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/4/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 7,  "type": "cloudspout-button-panel", "title": "LED 5", "gridPos": { "h": 4, "w": 3, "x": 15, "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/5/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 8,  "type": "cloudspout-button-panel", "title": "LED 6", "gridPos": { "h": 4, "w": 3, "x": 18, "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/6/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+    { "id": 9,  "type": "cloudspout-button-panel", "title": "LED 7", "gridPos": { "h": 4, "w": 3, "x": 21, "y": 5 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Ligar",    "url": "http://localhost:8000/leds/7/on",  "method": "POST", "variant": "success",     "orientation": "center" }, "datasource": null },
+
+    { "id": 10, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 0,  "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/0/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 11, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 3,  "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/1/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 12, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 6,  "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/2/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 13, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 9,  "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/3/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 14, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/4/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 15, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/5/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 16, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/6/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+    { "id": 17, "type": "cloudspout-button-panel", "title": "",      "gridPos": { "h": 4, "w": 3, "x": 21, "y": 9 }, "fieldConfig": { "defaults": {}, "overrides": [] }, "options": { "text": "Desligar", "url": "http://localhost:8000/leds/7/off", "method": "POST", "variant": "destructive", "orientation": "center" }, "datasource": null },
+
+    {
+      "id": 18,
+      "type": "table",
+      "title": "Histórico de Eventos",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
+      "datasource": { "type": "postgres", "uid": "postgres-industrial" },
+      "options": { "cellHeight": "sm", "showHeader": true, "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "center" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Estado" },
+            "properties": [{ "id": "mappings", "value": [{ "type": "value", "options": {
+              "ON":  { "color": "green", "index": 0, "text": "ON"  },
+              "OFF": { "color": "red",   "index": 1, "text": "OFF" }
+            }}]}]
+          }
+        ]
+      },
+      "targets": [{ "datasource": { "type": "postgres", "uid": "postgres-industrial" }, "format": "table", "rawQuery": true, "rawSql": "SELECT occurred_at AS \"Data/Hora\", led_id AS \"LED\", CASE WHEN toggled THEN 'ON' ELSE 'OFF' END AS \"Estado\", confirmed_by_plc AS \"Confirmado pelo CLP\", COALESCE(error, '—') AS \"Erro\" FROM led_events ORDER BY occurred_at DESC LIMIT 100", "refId": "A" }]
+    }
+
+  ]
+}
