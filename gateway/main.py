@@ -69,9 +69,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=Config.CORS_ORIGINS,
-    allow_methods=["GET", "PATCH"],
-    allow_headers=["Content-Type"],
+    allow_origin_regex=".*",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -112,11 +113,25 @@ async def get_led(led_id: int):
     return LedResponse(id=led["id"], toggled=led["toggled"], confirmed_by_plc=False)
 
 
+@app.post("/leds/{led_id}/on", response_model=LedResponse, summary="Acende um LED via Modbus TCP")
+async def led_on(led_id: int):
+    return await _execute_led_command(led_id, toggled=True)
+
+
+@app.post("/leds/{led_id}/off", response_model=LedResponse, summary="Apaga um LED via Modbus TCP")
+async def led_off(led_id: int):
+    return await _execute_led_command(led_id, toggled=False)
+
+
 @app.patch("/leds/{led_id}", response_model=LedResponse, summary="Acende ou apaga um LED via Modbus TCP")
 async def set_led(led_id: int, body: LedCommandRequest):
+    return await _execute_led_command(led_id, toggled=body.toggled)
+
+
+async def _execute_led_command(led_id: int, toggled: bool) -> LedResponse:
     _validate_led_id(led_id)
 
-    command = CommandRequested(led_id=led_id, toggled=body.toggled)
+    command = CommandRequested(led_id=led_id, toggled=toggled)
     future = bus.expect(command.correlation_id)
 
     await bus.publish(command)
@@ -125,6 +140,12 @@ async def set_led(led_id: int, body: LedCommandRequest):
         result: CommandExecuted = await asyncio.wait_for(future, timeout=COMMAND_TIMEOUT)
     except asyncio.TimeoutError:
         bus._pending.pop(command.correlation_id, None)
+        await db.log_event(
+            led_id=led_id,
+            toggled=toggled,
+            confirmed_by_plc=False,
+            error=f"Timeout: sem resposta do CLP em {COMMAND_TIMEOUT}s",
+        )
         raise HTTPException(
             status_code=504,
             detail=f"Timeout aguardando resposta do CLP para LED {led_id}.",

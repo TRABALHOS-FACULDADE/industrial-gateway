@@ -18,3 +18,4 @@ class CommandExecuted:
     confirmed_by_plc: bool
     success: bool
     correlation_id: str
+    error: str | None = None

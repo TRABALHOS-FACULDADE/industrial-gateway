@@ -16,11 +16,12 @@ INSERT INTO leds (id, toggled) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS led_events (
-    id              BIGSERIAL       PRIMARY KEY,
-    led_id          INTEGER         NOT NULL REFERENCES leds(id),
-    toggled         BOOLEAN         NOT NULL,
-    confirmed_by_plc BOOLEAN        NOT NULL DEFAULT FALSE,
-    occurred_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+    id               BIGSERIAL       PRIMARY KEY,
+    led_id           INTEGER         NOT NULL REFERENCES leds(id),
+    toggled          BOOLEAN         NOT NULL,
+    confirmed_by_plc BOOLEAN         NOT NULL DEFAULT FALSE,
+    error            TEXT,
+    occurred_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_led_events_led_time

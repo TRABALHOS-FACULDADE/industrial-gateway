@@ -34,9 +34,11 @@ class DatabaseClient:
     # ── Subscriber ────────────────────────────────────────────────
 
     async def handle_event(self, event: CommandExecuted) -> None:
-        """Recebe CommandExecuted e persiste o estado no banco."""
-        await self.update_led(event.led_id, event.toggled)
-        await self.log_event(event.led_id, event.toggled, event.confirmed_by_plc)
+        """Recebe CommandExecuted e persiste o estado no banco.
+        Só atualiza a tabela leds se o comando chegou ao hardware com sucesso."""
+        if event.success:
+            await self.update_led(event.led_id, event.toggled)
+        await self.log_event(event.led_id, event.toggled, event.confirmed_by_plc, event.error)
 
     # ── Leitura ───────────────────────────────────────────────────
 
@@ -73,14 +75,22 @@ class DatabaseClient:
             logger.error(f"Erro ao atualizar LED {led_id}: {e}")
             return False
 
-    async def log_event(self, led_id: int, toggled: bool, confirmed_by_plc: bool) -> bool:
+    async def log_event(
+        self,
+        led_id: int,
+        toggled: bool,
+        confirmed_by_plc: bool,
+        error: str | None = None,
+    ) -> bool:
         sql = """
-            INSERT INTO led_events (led_id, toggled, confirmed_by_plc)
-            VALUES ($1, $2, $3)
+            INSERT INTO led_events (led_id, toggled, confirmed_by_plc, error)
+            VALUES ($1, $2, $3, $4)
         """
         try:
             async with self._pool.acquire() as conn:
-                await conn.execute(sql, led_id, toggled, confirmed_by_plc)
+                await conn.execute(sql, led_id, toggled, confirmed_by_plc, error)
+            if error:
+                logger.warning(f"Evento de falha registrado — LED {led_id}: {error}")
             return True
         except asyncpg.PostgresError as e:
             logger.error(f"Erro ao registrar evento do LED {led_id}: {e}")

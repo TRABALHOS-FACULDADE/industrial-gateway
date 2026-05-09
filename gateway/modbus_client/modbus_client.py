@@ -15,8 +15,8 @@ class ModbusClient:
         self._client = AsyncModbusTcpClient(
             host=Config.PLC_HOST,
             port=Config.PLC_PORT,
-            timeout=3,
-            retries=3,
+            timeout=2,
+            retries=1,
         )
         self._bus = bus
 
@@ -51,6 +51,7 @@ class ModbusClient:
                 confirmed_by_plc=False,
                 success=False,
                 correlation_id=event.correlation_id,
+                error=f"Sem comunicação com o CLP ({Config.PLC_HOST}:{Config.PLC_PORT})",
             ))
             return
 
