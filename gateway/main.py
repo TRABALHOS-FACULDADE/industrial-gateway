@@ -193,6 +193,7 @@ async def health_check():
         "api": "ok",
         "database": "ok" if database_ok else "down",
         "plc_connected": modbus.is_connected,
+        "plc_simulation": Config.PLC_SIMULATION,
         "plc_host": Config.PLC_HOST,
         "plc_port": Config.PLC_PORT,
         "plc_sync_interval_seconds": Config.PLC_SYNC_INTERVAL_SECONDS,

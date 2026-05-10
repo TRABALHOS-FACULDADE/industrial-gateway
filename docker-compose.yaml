@@ -59,6 +59,7 @@ services:
       PLC_PORT: ${PLC_PORT:-502}
       PLC_UNIT_ID: ${PLC_UNIT_ID:-1}
       PLC_SYNC_INTERVAL_SECONDS: ${PLC_SYNC_INTERVAL_SECONDS:-5}
+      PLC_SIMULATION: ${PLC_SIMULATION:-false}
       # CORS — origem do Grafana no browser do operador
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     networks:

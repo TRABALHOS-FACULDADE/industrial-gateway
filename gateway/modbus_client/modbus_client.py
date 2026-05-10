@@ -19,10 +19,15 @@ class ModbusClient:
             retries=1,
         )
         self._bus = bus
+        self._simulated_coils = [False] * Config.TOTAL_LEDS
 
     # ── Conexão ───────────────────────────────────────────────────
 
     async def connect(self) -> bool:
+        if Config.PLC_SIMULATION:
+            logger.info("Modo simulado do CLP ativo; conexao Modbus real ignorada.")
+            return True
+
         connected = await self._client.connect()
         if connected:
             logger.info(f"Modbus conectado — {Config.PLC_HOST}:{Config.PLC_PORT}")
@@ -31,11 +36,17 @@ class ModbusClient:
         return connected
 
     async def disconnect(self) -> None:
+        if Config.PLC_SIMULATION:
+            logger.info("Modo simulado do CLP encerrado.")
+            return
+
         self._client.close()
         logger.info("Conexão Modbus encerrada.")
 
     @property
     def is_connected(self) -> bool:
+        if Config.PLC_SIMULATION:
+            return True
         return self._client.connected
 
     # ── Subscriber ────────────────────────────────────────────────
@@ -76,6 +87,11 @@ class ModbusClient:
     # ── Operações Modbus ──────────────────────────────────────────
 
     async def _write_coil(self, address: int, value: bool) -> bool:
+        if Config.PLC_SIMULATION:
+            self._simulated_coils[address] = value
+            logger.info(f"Coil simulado {address} -> {'ON' if value else 'OFF'}")
+            return True
+
         if not self.is_connected:
             logger.warning(f"Tentativa de escrita sem conexão (coil {address})")
             if not await self.connect():
@@ -96,6 +112,11 @@ class ModbusClient:
             return False
 
     async def _read_coil(self, address: int) -> bool | None:
+        if Config.PLC_SIMULATION:
+            state = self._simulated_coils[address]
+            logger.debug(f"Coil simulado {address} lido -> {'ON' if state else 'OFF'}")
+            return state
+
         if not self.is_connected:
             if not await self.connect():
                 return None
@@ -116,6 +137,9 @@ class ModbusClient:
             return None
 
     async def read_all_coils(self, count: int = Config.TOTAL_LEDS) -> list[bool] | None:
+        if Config.PLC_SIMULATION:
+            return self._simulated_coils[:count]
+
         if not self.is_connected:
             if not await self.connect():
                 return None
