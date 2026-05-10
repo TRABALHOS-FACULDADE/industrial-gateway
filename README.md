@@ -63,7 +63,7 @@ O sistema usa uma arquitetura híbrida orientada a eventos: a API recebe o coman
 
 ```bash
 # 1. Configure o ambiente
-cp .env.example .env
+cp env.example .env
 # Edite o .env com sua senha do banco
 
 # 2. Suba tudo
@@ -85,9 +85,9 @@ docker compose up --build
 
 | Variável            | Descrição                        | Padrão              |
 |---------------------|----------------------------------|---------------------|
-| `DB_USER`           | Usuário do PostgreSQL            | `postgres`          |
-| `DB_PASSWORD`       | Senha do PostgreSQL              | —                   |
-| `DB_NAME`           | Nome do banco de dados           | `IndustrialGateway` |
+| `POSTGRES_USER`     | Usuário do PostgreSQL            | `postgres`          |
+| `POSTGRES_PASSWORD` | Senha do PostgreSQL              | —                   |
+| `POSTGRES_DB`       | Nome do banco de dados           | `industrial_db`     |
 | `PLC_HOST`          | IP do CLP Altus XP340            | `192.168.15.1`      |
 | `PLC_PORT`          | Porta Modbus TCP                 | `502`               |
 | `PLC_UNIT_ID`       | Unit ID Modbus                   | `1`                 |
