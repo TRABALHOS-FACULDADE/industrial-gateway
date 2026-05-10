@@ -15,6 +15,7 @@ class Config:
     PLC_HOST    = os.getenv("PLC_HOST", "192.168.15.1")
     PLC_PORT    = int(os.getenv("PLC_PORT", 502))
     PLC_UNIT_ID = int(os.getenv("PLC_UNIT_ID", 1))
+    PLC_SYNC_INTERVAL_SECONDS = int(os.getenv("PLC_SYNC_INTERVAL_SECONDS", 5))
 
     CORS_ORIGINS: list[str] = [
         origin.strip()

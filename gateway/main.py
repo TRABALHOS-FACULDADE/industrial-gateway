@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import sys
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +31,7 @@ COMMAND_TIMEOUT = 5.0
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    sync_task: asyncio.Task | None = None
     logger.info("════ Gateway Industrial iniciando ════")
 
     # Wiring: conecta os serviços ao Event Bus
@@ -51,11 +52,31 @@ async def lifespan(app: FastAPI):
             "A API subirá, mas comandos Modbus falharão até o CLP estar acessível."
         )
 
-    yield
+    sync_task = asyncio.create_task(_sync_leds_from_plc_periodically())
 
-    await modbus.disconnect()
-    await db.disconnect()
-    logger.info("Gateway encerrado com segurança.")
+    try:
+        yield
+    finally:
+        if sync_task:
+            sync_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await sync_task
+
+        await modbus.disconnect()
+        await db.disconnect()
+        logger.info("Gateway encerrado com segurança.")
+
+
+async def _sync_leds_from_plc_periodically() -> None:
+    while True:
+        try:
+            states = await modbus.read_all_coils()
+            if states is not None:
+                await db.sync_leds_from_plc(states)
+        except Exception as e:
+            logger.error(f"Falha na sincronizacao periodica do CLP: {e}")
+
+        await asyncio.sleep(Config.PLC_SYNC_INTERVAL_SECONDS)
 
 
 # ── App ───────────────────────────────────────────────────────────
@@ -167,11 +188,14 @@ async def _execute_led_command(led_id: int, toggled: bool) -> LedResponse:
 
 @app.get("/health", summary="Health check da API e dependências")
 async def health_check():
+    database_ok = await db.is_healthy()
     return {
         "api": "ok",
+        "database": "ok" if database_ok else "down",
         "plc_connected": modbus.is_connected,
         "plc_host": Config.PLC_HOST,
         "plc_port": Config.PLC_PORT,
+        "plc_sync_interval_seconds": Config.PLC_SYNC_INTERVAL_SECONDS,
     }
 
 
