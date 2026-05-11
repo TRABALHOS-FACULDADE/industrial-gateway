@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
     # Wiring: conecta os serviços ao Event Bus
     bus.subscribe(CommandRequested, modbus.handle_command)
     bus.subscribe(CommandExecuted, db.handle_event)
+    bus.start()
 
     try:
         await db.connect()
@@ -62,6 +63,7 @@ async def lifespan(app: FastAPI):
             with suppress(asyncio.CancelledError):
                 await sync_task
 
+        await bus.stop()
         await modbus.disconnect()
         await db.disconnect()
         logger.info("Gateway encerrado com segurança.")
@@ -160,7 +162,7 @@ async def _execute_led_command(led_id: int, toggled: bool) -> LedResponse:
     try:
         result: CommandExecuted = await asyncio.wait_for(future, timeout=COMMAND_TIMEOUT)
     except asyncio.TimeoutError:
-        bus._pending.pop(command.correlation_id, None)
+        bus.cancel_expectation(command.correlation_id)
         await db.log_event(
             led_id=led_id,
             toggled=toggled,
