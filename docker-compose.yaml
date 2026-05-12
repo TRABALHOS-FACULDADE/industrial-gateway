@@ -19,16 +19,20 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-industrial_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - industrial_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-industrial_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,13 +55,15 @@ services:
       # Banco
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-IndustrialGateway}
+      DB_NAME: ${POSTGRES_DB:-industrial_db}
       DB_USER: ${POSTGRES_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       # CLP
       PLC_HOST: ${PLC_HOST:-192.168.15.1}
       PLC_PORT: ${PLC_PORT:-502}
       PLC_UNIT_ID: ${PLC_UNIT_ID:-1}
+      PLC_SYNC_INTERVAL_SECONDS: ${PLC_SYNC_INTERVAL_SECONDS:-5}
+      PLC_SIMULATION: ${PLC_SIMULATION:-false}
       # CORS — origem do Grafana no browser do operador
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     networks:
@@ -82,8 +88,9 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
       GF_INSTALL_PLUGINS: cloudspout-button-panel
       GF_SECURITY_ALLOW_EMBEDDING: "true"
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME:-IndustrialGateway}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB:-industrial_db}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro

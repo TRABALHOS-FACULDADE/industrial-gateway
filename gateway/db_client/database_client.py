@@ -31,6 +31,17 @@ class DatabaseClient:
         if self._pool:
             await self._pool.close()
 
+    async def is_healthy(self) -> bool:
+        if not self._pool:
+            return False
+        try:
+            async with self._pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+            return True
+        except asyncpg.PostgresError as e:
+            logger.error(f"Health check do PostgreSQL falhou: {e}")
+            return False
+
     # ── Subscriber ────────────────────────────────────────────────
 
     async def handle_event(self, event: CommandExecuted) -> None:
